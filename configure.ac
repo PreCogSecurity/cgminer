@@ -464,6 +464,20 @@ AC_SUBST(MATH_LIBS)
 AC_SUBST(RT_LIBS)
 AC_SUBST(ADL_CPPFLAGS)
 
+dnl Linker flag used by the unit tests to garbage-collect unused function
+dnl sections, so tests/test_util can link util.c without its network deps.
+AC_MSG_CHECKING([for linker flag to garbage collect unused sections])
+case $host in
+  *-*-darwin*)
+    TEST_LDFLAGS="-Wl,-dead_strip"
+    ;;
+  *)
+    TEST_LDFLAGS="-Wl,--gc-sections"
+    ;;
+esac
+AC_SUBST(TEST_LDFLAGS)
+AC_MSG_RESULT([$TEST_LDFLAGS])
+
 AC_CONFIG_FILES([
 	Makefile
 	compat/Makefile

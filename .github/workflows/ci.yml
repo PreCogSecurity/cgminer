@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build and run tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            libcurl4-openssl-dev \
+            libncurses-dev \
+            libudev-dev
+
+      - name: Autogen and configure
+        # --disable-opencl keeps the build free of the AMD/OpenCL SDK, and
+        # --enable-avalon satisfies configure's requirement that at least one
+        # mining driver is enabled when OpenCL is unavailable.
+        run: |
+          sh autogen.sh --disable-opencl --enable-avalon
+
+      - name: Build
+        run: make -j"$(nproc)"
+
+      - name: Run unit tests
+        run: make check
+
+  lint:
+    name: Format check (new code)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Check formatting of tests/
+        # The legacy cgminer sources predate the .clang-format config and are
+        # not yet clean; the check is scoped to the code this repo owns going
+        # forward (the tests/ directory).
+        run: clang-format --dry-run --Werror tests/*.c tests/*.h

@@ -1,0 +1,22 @@
+# One-command startup for cgminer.
+#
+#   docker compose up --build
+#
+# Override the pool settings via the environment or by editing `command`.
+# See the README "Running with Docker" section for details.
+
+services:
+  cgminer:
+    build: .
+    image: cgminer:latest
+    # Replace POOL_URL / USERNAME / PASSWORD with your pool credentials.
+    # Example: stratum+tcp://pool.example.com:3333
+    command:
+      - --keccak
+      - -o
+      - ${CGMINER_POOL_URL:-stratum+tcp://pool.example.com:3333}
+      - -u
+      - ${CGMINER_POOL_USER:-username.worker}
+      - -p
+      - ${CGMINER_POOL_PASS:-x}
+    restart: unless-stopped
