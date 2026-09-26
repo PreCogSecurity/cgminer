@@ -3,6 +3,11 @@
 # The build stage compiles the miner with the same toolchain and options the
 # CI workflow uses (no OpenCL SDK required). The runtime stage keeps only the
 # binary, the OpenCL kernel sources and the shared libraries it needs.
+#
+# The image ships the miner as its entrypoint, so a shell in the built image is
+# opt-in via an entrypoint override:
+#
+#   docker run --rm -it --entrypoint /bin/bash cgminer:latest
 
 FROM ubuntu:22.04 AS build
 

@@ -9,6 +9,11 @@ services:
   cgminer:
     build: .
     image: cgminer:latest
+    working_dir: /app
+    # The image entrypoint is the miner itself, so `command` only carries the
+    # pool arguments. No port is published because cgminer opens no listener,
+    # and the source tree is not bind mounted over /app because that would hide
+    # the compiled binary and the OpenCL kernels shipped in the image.
     # Replace POOL_URL / USERNAME / PASSWORD with your pool credentials.
     # Example: stratum+tcp://pool.example.com:3333
     command:
