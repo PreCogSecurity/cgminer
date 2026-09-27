@@ -14,11 +14,16 @@ EXTRA_DIST	= example.conf m4/gnulib-cache.m4 linux-usb-cgminer \
 		  API.class API.java api-example.c windows-build.txt \
 		  bitstreams/* API-README FPGA-README SCRYPT-README \
 		  bitforce-firmware-flash.c hexdump.c ASIC-README \
-		  01-cgminer.rules GPU-README
+		  01-cgminer.rules GPU-README \
+		  tests/test.h tests/test_sha2.c tests/test_util.c
 
 SUBDIRS		= lib compat ccan
 
-INCLUDES	= $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_INCLUDES) $(USBUTILS_INCLUDES)
+# -fcommon: the driver structs declared in miner.h are tentative definitions
+# that rely on traditional common-symbol merging. GCC >= 10 defaults to
+# -fno-common which turns those into multiple-definition link errors, so
+# restore the historical behaviour explicitly.
+INCLUDES	= $(PTHREAD_FLAGS) -fno-strict-aliasing -fcommon $(JANSSON_INCLUDES) $(USBUTILS_INCLUDES)
 
 bin_PROGRAMS	= cgminer
 
@@ -101,3 +106,21 @@ cgminer_SOURCES += driver-modminer.c
 bitstreamsdir = $(bindir)/bitstreams
 dist_bitstreams_DATA = $(top_srcdir)/bitstreams/*
 endif
+
+# Unit tests, run with `make check`.
+#
+# test_util links util.c with function/data sections and lets the linker
+# garbage-collect everything the test does not reference, so the pure helper
+# functions can be exercised without pulling in the socket/pool/network code.
+check_PROGRAMS	= tests/test_sha2 tests/test_util
+TESTS		= tests/test_sha2 tests/test_util
+
+tests_test_sha2_SOURCES	= tests/test_sha2.c sha2.c
+tests_test_sha2_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir) \
+		  -I$(top_builddir)/lib -I$(top_srcdir)/lib @LIBCURL_CFLAGS@
+
+tests_test_util_SOURCES	= tests/test_util.c util.c
+tests_test_util_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir) \
+		  -I$(top_builddir)/lib -I$(top_srcdir)/lib @LIBCURL_CFLAGS@
+tests_test_util_CFLAGS	= -ffunction-sections -fdata-sections
+tests_test_util_LDFLAGS	= @TEST_LDFLAGS@
